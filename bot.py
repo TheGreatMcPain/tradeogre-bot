@@ -30,7 +30,7 @@ async def on_ready():
 
 @client.command(help="Displays the current/high/low price of a ticker.")
 #Tradeogre prices
-async def price(ctx, currency: str, crypto: str, multiplier: int = 1):
+async def price(ctx, currency: str, crypto: str, multiplier: float = 1):
 
     input1 = currency.upper()
     input2 = crypto.upper()
