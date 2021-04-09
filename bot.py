@@ -28,7 +28,7 @@ async def on_ready():
 
 @client.command(help="Displays the current/high/low price of a ticker.")
 #Tradeogre prices
-async def price(ctx, currency: str, crypto: str, crypto_amount: int = 1):
+async def price(ctx, currency: str, crypto: str, multiplier: int = 1):
 
     input1 = currency.upper()
     input2 = crypto.upper()
@@ -51,14 +51,14 @@ async def price(ctx, currency: str, crypto: str, crypto_amount: int = 1):
         await ctx.send("Not a supported currency pair")
         return
 
-    # Get prices and multiply them with 'crypto_amount'
-    price_data = float(data['price']) * crypto_amount
-    high_data = float(data['high']) * crypto_amount
-    low_data = float(data['low']) * crypto_amount
+    # Get prices and multiply them with 'multiplier'
+    price_data = float(data['price']) * multiplier
+    high_data = float(data['high']) * multiplier
+    low_data = float(data['low']) * multiplier
 
     # Get the est. USD price as well.
     price_usdt = calulate_USDT(markets, input1) * float(
-        data['price']) * crypto_amount
+        data['price']) * multiplier
 
     # Convert each value to a string
     # 'str() will use scientific notation on really low values.'
@@ -67,7 +67,7 @@ async def price(ctx, currency: str, crypto: str, crypto_amount: int = 1):
     low_data = "{:.8f}".format(low_data)
     price_usdt = "{:.8f}".format(price_usdt)
 
-    finalString = input2 + " Amount: " + str(crypto_amount) + '\n'
+    finalString = input2 + " Amount: " + str(multiplier) + '\n'
     finalString += "Current Price ({}): ".format(input1) + price_data + '\n'
     finalString += "24hr High ({}): ".format(input1) + high_data + '\n'
     finalString += "24hr Low ({}): ".format(input1) + low_data + '\n\n'
