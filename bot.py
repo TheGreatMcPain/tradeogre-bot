@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import discord, json, asyncio, requests, os
 from discord.ext.commands import Bot
 
