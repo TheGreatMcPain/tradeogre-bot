@@ -24,6 +24,8 @@ def calulate_USDT(markets, currency):
 @client.event
 async def on_ready():
     print("Logged in")
+    await client.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.watching, name="the market"))
 
 
 @client.command(help="Displays the current/high/low price of a ticker.")
