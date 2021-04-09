@@ -67,7 +67,7 @@ async def price(ctx, currency: str, crypto: str, multiplier: int = 1):
     low_data = "{:.8f}".format(low_data)
     price_usdt = "{:.8f}".format(price_usdt)
 
-    finalString = input2 + " Amount: " + str(multiplier) + '\n'
+    finalString = "Multiplier: " + str(multiplier) + '\n'
     finalString += "Current Price ({}): ".format(input1) + price_data + '\n'
     finalString += "24hr High ({}): ".format(input1) + high_data + '\n'
     finalString += "24hr Low ({}): ".format(input1) + low_data + '\n\n'
