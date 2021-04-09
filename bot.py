@@ -1,20 +1,23 @@
 import discord, json, asyncio, requests, os
 from discord.ext.commands import Bot
 
-primaryCurrency = ['BTC', 'LTC']
-
-altCoin = [
-    'ACM', 'AEON', 'ARQ', 'BBS', 'BCN', 'BKC', 'BLOC', 'BSM', 'BTCP', 'CIV',
-    'COAL', 'D', 'DASH', 'DERO', 'DOGE', 'ETH', 'ETN', 'ETNX', 'ETNXP', 'FBF',
-    'GPKR', 'GRFT', 'INC', 'INTU', 'IRD', 'KRB', 'LNS', 'LOKI', 'LTC', 'LTHN',
-    'LUX', 'MSR', 'NAH', 'NBR', 'OMB', 'PCN', 'PIVX', 'PIVX', 'PLURA', 'PURK',
-    'QTUM', 'QUAN', 'RTO', 'RVN', 'RYO', 'SHB', 'SLD', 'SOLACE', 'SUMO',
-    'SUQA', 'TRTL', 'TUBE', 'WAE', 'WOW', "WTIP", 'XAO', 'XGS', 'XHV', 'XMC',
-    'XMR', 'XMV', 'XNV', 'XPP', 'XRN', 'XTA', 'XTL', 'XTRI', 'XUN', 'XVG',
-    'ZEL'
-]
-
 client = Bot(command_prefix="!")
+
+
+# Get the USD (USDT) value of BTC or LTC
+def calulate_USDT(markets, currency):
+    # Get the current USDT-BTC and BTC-LTC prices
+    for market in markets:
+        if "USDT-BTC" in market.keys():
+            price_usdt_btc = float(market['USDT-BTC']['price'])
+
+        if "BTC-LTC" in market.keys():
+            price_btc_ltc = float(market['BTC-LTC']['price'])
+
+    if currency == "LTC":
+        return price_usdt_btc * price_btc_ltc
+    else:
+        return price_usdt_btc
 
 
 @client.event
@@ -22,127 +25,78 @@ async def on_ready():
     print("Logged in")
 
 
-@client.command()
+@client.command(help="Displays the current/high/low price of a ticker.")
 #Tradeogre prices
-async def price(ctx, currency, crypto):
+async def price(ctx, currency: str, crypto: str, crypto_amount: int = 1):
 
-    input1 = str(currency).upper()
-    input2 = str(crypto).upper()
+    input1 = currency.upper()
+    input2 = crypto.upper()
+    ticker = "{}-{}".format(input1, input2)
 
-    if (input1 in primaryCurrency):
-        if (input2 in altCoin):
-            url = "https://tradeogre.com/api/v1/ticker/{}-{}".format(
-                input1, input2)
-            response = requests.get(url)
-            data = response.json()
+    # Get market data from TradeOgre
+    url = "https://tradeogre.com/api/v1/markets"
+    response = requests.get(url)
+    markets = response.json()
 
-            price_data = data['price']
-            high_data = data['high']
-            low_data = data['low']
+    # Search the markets for the specified ticker.
+    data = None
+    for market in markets:
+        if ticker in market.keys():
+            data = market[ticker]
+            break
 
-            finalString = "Current Price: " + str(
-                price_data) + '\n' + "24hr High: " + str(
-                    high_data) + '\n' + "24hr Low: " + str(low_data)
-
-            embed = discord.Embed(title='{}-{}'.format(input1, input2),
-                                  description=finalString,
-                                  color=0x00ff00)
-
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("Not a supported currency pair")
-    else:
+    # If we can't find the ticker, exit.
+    if not data:
         await ctx.send("Not a supported currency pair")
+        return
 
+    # Get prices and multiply them with 'crypto_amount'
+    price_data = float(data['price']) * crypto_amount
+    high_data = float(data['high']) * crypto_amount
+    low_data = float(data['low']) * crypto_amount
 
-#Personal API prices
-@client.command()
-async def sat(ctx):
-    url2 = "https://api.coindesk.com/v1/bpi/currentprice.json"
-    response2 = requests.get(url2)
-    data2 = response2.text
-    parsed2 = json.loads(data2)
-    usd_parsed_btc = parsed2["bpi"]["USD"]["rate"]
-    eur_parsed_btc = parsed2["bpi"]["EUR"]["rate"]
+    # Get the est. USD price as well.
+    price_usdt = calulate_USDT(markets, input1) * float(
+        data['price']) * crypto_amount
 
-    url = "https://gntf7hd0uj.execute-api.us-east-2.amazonaws.com/default/satoshiAPI"
-    response = requests.get(url)
-    data = response.text
-    parsed = json.loads(data)
-    eur_rate = parsed["EUR"]
-    usd_rate = parsed["USD"]
+    # Convert each value to a string
+    # 'str() will use scientific notation on really low values.'
+    price_data = "{:.8f}".format(price_data)
+    high_data = "{:.8f}".format(high_data)
+    low_data = "{:.8f}".format(low_data)
+    price_usdt = "{:.8f}".format(price_usdt)
 
-    usd_price = "$ `" + usd_rate + "`\n"
-    eur_price = "€ `" + eur_rate + "`\n"
+    finalString = input2 + " Amount: " + str(crypto_amount) + '\n'
+    finalString += "Current Price ({}): ".format(input1) + price_data + '\n'
+    finalString += "24hr High ({}): ".format(input1) + high_data + '\n'
+    finalString += "24hr Low ({}): ".format(input1) + low_data + '\n\n'
+    finalString += "Est. USD (USDT): " + price_usdt
 
-    btc_usd_price = "$ `" + usd_parsed_btc + "`\n"
-    btc_eur_price = "€`" + eur_parsed_btc + "`\n"
+    embed = discord.Embed(title='{}-{}'.format(input1, input2),
+                          description=finalString,
+                          color=0x00ff00)
 
-    data = "SAT/USD: " + usd_price + "SAT/EUR: " + eur_price + "BTC/USD: " + btc_usd_price + "BTC/EUR: " + btc_eur_price
-
-    embed = discord.Embed(title="Satoshi Price Data",
-                          description=data,
-                          color=0xff66cc)
     await ctx.send(embed=embed)
 
 
-#Satoshi Calculator USD
-@client.command()
-async def satusd(ctx, number, number2):
-    url = "https://gntf7hd0uj.execute-api.us-east-2.amazonaws.com/default/satoshiAPI"
-    response = requests.get(url)
-    data = response.text
-    parsed = json.loads(data)
-    usd_rate = parsed["USD"]
-    int_usd_rate = float(usd_rate)
-
-    inputed_price = int(number)
-    inputed_amount = int(number2)
-    price = inputed_amount * inputed_price
-    final_price = format(price * int_usd_rate, '.2f')
-
-    await ctx.send('$' + str(final_price))
-
-
-#Satoshi Calculator EUR
-@client.command()
-async def sateur(ctx, number, number2):
-    url = "https://gntf7hd0uj.execute-api.us-east-2.amazonaws.com/default/satoshiAPI"
-    response = requests.get(url)
-    data = response.text
-    parsed = json.loads(data)
-    eur_rate = parsed["EUR"]
-    int_eur_rate = float(eur_rate)
-
-    inputed_price = int(number)
-    inputed_amount = int(number2)
-    price = inputed_amount * inputed_price
-    final_price = format(price * int_eur_rate, '.2f')
-
-    await ctx.send('€' + str(final_price))
-
-
-@client.command()
+@client.command(help="Displays donation addresses")
 async def donate(ctx):
-    await ctx.send(
-        "To donate please use this BTC address: 3CuYbCWtKdW6PqZHHF1oJjpmeX5Ddp6SrV "
-    )
+    addresses = "ZONiiX's (original author) "
+    addresses += "BTC: 3CuYbCWtKdW6PqZHHF1oJjpmeX5Ddp6SrV\n\n"
+    addresses += "TheGreatMcPain's (author of this fork) XMR: "
+    addresses += "47vzLe61ikedTLm7dmmXWZdEpBRqpQAM5EvKXakpRn5UNcCE6MtY9mzME2gT3f1f85PDGZ7hBnAUhWNBe5cyhJHmQCbaizH"
 
+    embed = discord.Embed(title="Donation addresses",
+                          description=addresses,
+                          color=0xff6666)
 
-@client.command()
-async def api(ctx):
-    data = "https://gntf7hd0uj.execute-api.us-east-2.amazonaws.com/default/satoshiAPI" + '\n' + "https://api.coindesk.com/v1/bpi/currentprice.json" + '\n' + 'https://tradeogre.com/api/v1/markets'
-
-    embed = discord.Embed(title="API's", description=data, color=0xff6666)
     await ctx.send(embed=embed)
 
 
-#WORK ON THIS NEXT
-@client.command()
+@client.command(help="Checks if tradeogre is online")
 async def online(ctx):
-    response = requests.get("https://tradeogre.com/markets")
-    statusCode = int(response.status_code)
-    if statusCode == 200:
+    response = requests.get("https://tradeogre.com/api/v1/markets")
+    if response.ok:
         await ctx.send("Tradeogre is online.")
     else:
         await ctx.send("Tradeogre is offline.")
