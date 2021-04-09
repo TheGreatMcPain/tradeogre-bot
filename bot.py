@@ -83,8 +83,8 @@ async def price(ctx, currency: str, crypto: str, crypto_amount: int = 1):
 async def donate(ctx):
     addresses = "ZONiiX's (original author) "
     addresses += "BTC: 3CuYbCWtKdW6PqZHHF1oJjpmeX5Ddp6SrV\n\n"
-    addresses += "TheGreatMcPain's (author of this fork) XMR: "
-    addresses += "47vzLe61ikedTLm7dmmXWZdEpBRqpQAM5EvKXakpRn5UNcCE6MtY9mzME2gT3f1f85PDGZ7hBnAUhWNBe5cyhJHmQCbaizH"
+    addresses += "TheGreatMcPain's (author of this fork): "
+    addresses += "See: https://github.com/TheGreatMcPain"
 
     embed = discord.Embed(title="Donation addresses",
                           description=addresses,
