@@ -72,8 +72,10 @@ async def price(ctx, currency: str, crypto: str, multiplier: float = 1):
     finalString = "Multiplier: " + str(multiplier) + '\n'
     finalString += "Current Price ({}): ".format(input1) + price_data + '\n'
     finalString += "24hr High ({}): ".format(input1) + high_data + '\n'
-    finalString += "24hr Low ({}): ".format(input1) + low_data + '\n\n'
-    finalString += "Est. USD (USDT): " + price_usdt
+    finalString += "24hr Low ({}): ".format(input1) + low_data + '\n'
+
+    if currency != "USDT":
+        finalString += "\nEst. USD (USDT): " + price_usdt
 
     embed = discord.Embed(title='{}-{}'.format(input1, input2),
                           description=finalString,
