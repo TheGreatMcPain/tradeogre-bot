@@ -101,7 +101,7 @@ async def list(ctx, currency: str = None):
 
         pairs[primary].append(secondary)
 
-    primaries = list(pairs.keys())
+    primaries = [x for x in pairs.keys()]
 
     if currency:
         for primary in primaries:
@@ -118,19 +118,11 @@ async def list(ctx, currency: str = None):
         await ctx.send(error)
         return
 
-    max_string = 80
-
     output = ""
     for primary in pairs:
-        temp_output = "{} -> ".format(primary)
-        padding = " " * len(temp_output)
+        temp_output = "__{}__\n".format(primary)
 
         for secondary in pairs[primary]:
-            if len(temp_output) > max_string:
-                temp_output += "\n"
-                output += temp_output
-                temp_output = padding
-
             temp_output += "{} ".format(secondary)
 
         output += temp_output + "\n\n"
