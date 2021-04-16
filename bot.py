@@ -112,7 +112,7 @@ async def list(ctx, currency: str = None):
     # If our pairs dictionary is now empty the currency is
     # not supported
     if pairs == {}:
-        error = "{} is invalid.\n"
+        error = "{} is invalid.\n".format(currency)
         error += "The supported options are:"
         for primary in primaries:
             error += " {}".format(primary)
