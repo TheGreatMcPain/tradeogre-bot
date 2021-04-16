@@ -104,6 +104,7 @@ async def list(ctx, currency: str = None):
     primaries = [x for x in pairs.keys()]
 
     if currency:
+        currency = currency.upper()
         for primary in primaries:
             if currency not in primary:
                 pairs.pop(primary)
