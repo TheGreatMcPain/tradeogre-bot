@@ -50,7 +50,7 @@ async def price(ctx, currency: str, crypto: str, multiplier: float = 1):
 
     # If we can't find the ticker, exit.
     if not data:
-        await ctx.send("Not a supported currency pair")
+        await ctx.send("Not a supported currency pair\nSee '!list'")
         return
 
     # Get prices and multiply them with 'multiplier'
@@ -80,6 +80,61 @@ async def price(ctx, currency: str, crypto: str, multiplier: float = 1):
     embed = discord.Embed(title='{}-{}'.format(input1, input2),
                           description=finalString,
                           color=0x00ff00)
+
+    await ctx.send(embed=embed)
+
+
+@client.command(help="Lists supported pairs")
+async def list(ctx, currency: str = None):
+    # Get market data from TradeOgre
+    markets = requests.get("https://tradeogre.com/api/v1/markets").json()
+
+    # Get the listed market pairs and put them into a dictionary
+    pairs = {}
+    for market in markets:
+        pair = next(iter(market))
+        primary = pair.split('-')[0]
+        secondary = pair.split('-')[1]
+
+        if primary not in pairs.keys():
+            pairs[primary] = []
+
+        pairs[primary].append(secondary)
+
+    primaries = [x for x in pairs.keys()]
+
+    if currency:
+        currency = currency.upper()
+        for primary in primaries:
+            if currency not in primary:
+                pairs.pop(primary)
+
+    # If our pairs dictionary is now empty the currency is
+    # not supported
+    if pairs == {}:
+        error = "{} is invalid.\n".format(currency)
+        error += "The supported options are:"
+        for primary in primaries:
+            error += " {}".format(primary)
+        await ctx.send(error)
+        return
+
+    output = ""
+    for primary in pairs:
+        temp_output = "__{}__\n".format(primary)
+
+        for secondary in pairs[primary]:
+            temp_output += "{} ".format(secondary)
+
+        output += temp_output + "\n\n"
+    output = output.rstrip()
+
+    if currency:
+        title = "Supported Pairs for: {}".format(currency)
+    else:
+        title = "Supported Pairs"
+
+    embed = discord.Embed(title=title, description=output, color=0x00ff00)
 
     await ctx.send(embed=embed)
 
